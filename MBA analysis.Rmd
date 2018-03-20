@@ -1,0 +1,46 @@
+
+Reading the data from the 
+
+```{r}
+setwd("C:/Users/475506/Documents")
+
+dt=read.csv("grocery.csv",header=T)
+dt
+```
+
+```{r}
+max(sapply(str_extract_all(dt$Items,pattern = ','),length))
+```
+
+```{r}
+df = as.data.frame(str_split_fixed(dt$Items,pattern = ',',n=3))
+df
+```
+
+```{r}
+df$trans = seq(1:nrow(df))
+df
+df = df[,1:3]
+df
+colnames(df)=c("Item1","Item2","Item3")
+df
+str(df)
+```
+
+```{r}
+basket_rules <- apriori(df, parameter = list(sup = 0.2, conf = 0.5, target="rules"), appearance = list(rhs=c("Item1=bread","Item2=bread"), lhs="Item3=butter"))
+```
+
+
+```{r}
+inspect(basket_rules)
+```
+
+```{r}
+inspect(sort(basket_rules,by="lift"))
+```
+
+```{r}
+plot(basket_rules,method="graph")
+```
+

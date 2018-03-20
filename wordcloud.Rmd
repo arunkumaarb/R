@@ -1,0 +1,149 @@
+
+
+```{r}
+spam_or_ham=read.csv("spam.csv",stringsAsFactors = F)
+#Another way to avoid factors is cocnverting the factor to character
+#spam_or_ham$v1 = as.character(spam_or_ham$v1)
+View(spam_or_ham)
+spam_or_ham = spam_or_ham[,1:2]
+```
+
+Now the data is ready and clean. You can use complete.cases to see if there null values
+
+```{r}
+which(!complete.cases(spam_or_ham))
+```
+
+Below gives the proportion of spam data
+
+```{r}
+prop.table(table(spam_or_ham$Type))
+```
+
+There are 747 spam messages. Lets now give some meaningful name to the column
+
+```{r}
+names(spam_or_ham)
+colnames(spam_or_ham) = c("Type","Message")
+```
+
+Lets now find the text length
+
+```{r}
+spam_or_ham$Length=nchar(spam_or_ham$Message)
+head(spam_or_ham)
+```
+
+Lets now see a histogram of the count
+
+```{r}
+hist(spam_or_ham$Length)
+```
+
+Its not visually appealling. Lets use ggplot
+
+```{r}
+library(ggplot2)
+ggplot(spam_or_ham,aes(x=Length,fill=Type)) +geom_histogram()
+```
+
+You can separate the ham and spam using the facet
+
+```{r}
+ggplot(spam_or_ham,aes(x=Length,fill=Type)) +geom_histogram() +facet_grid(~Type)
+```
+
+We are going to use tm package for data mining
+
+```{r}
+install.packages("tm")
+```
+
+We are now going to create corpus of words
+
+```{r}
+install.packages("devtools")
+library(devtools)
+slam_url <- "https://cran.r-project.org/src/contrib/Archive/slam/slam_0.1-37.tar.gz"
+install_url(slam_url)
+library(tm)
+#We are passing the Message column as a vector to sms.corpus
+sms.corpus = Corpus(VectorSource(spam_or_ham$Message))
+```
+
+Printing sms.corpus will give you the number of rows in the Message column. If you want to see the actual data you use inspect function.
+
+```{r}
+print(sms.corpus)
+#We are inspecting the firt three rows
+inspect(sms.corpus[1:3])
+```
+
+Lets now clean the message
+
+Transalte all letters to lower case
+
+```{r}
+sms_corpus_clean = tm_map(sms.corpus, FUN = tolower)
+```
+
+Remove numbers
+
+```{r}
+sms_corpus_clean = tm_map(sms_corpus_clean,removeNumbers)
+```
+
+Remove punctuations
+
+```{r}
+sms_corpus_clean = tm_map(sms_corpus_clean,removePunctuation)
+```
+
+Removing stop words like I, me, we, our, ourselves etc
+
+```{r}
+sms_corpus_clean=tm_map(sms_corpus_clean,removeWords,stopwords())
+```
+
+Removing unnecassary whitespace
+
+```{r}
+sms_corpus_clean = tm_map(sms_corpus_clean, stripWhitespace)
+```
+
+Lets inspect now
+
+```{r}
+inspect(sms_corpus_clean[1:3])
+```
+
+Documented matrix for tokenization
+
+```{r}
+sms_dtm = DocumentTermMatrix(sms_corpus_clean)
+```
+
+```{r}
+inspect(sms_dtm[1:10,10:15])
+```
+
+We can combine the entire thing that we above in a single step using the documentmatrix
+
+```{r}
+sms_dtm2 = DocumentTermMatrix(sms_corpus_clean, control = list(
+  tolower = T,
+  removeNumbers=T,
+  stopwords=T,
+  removePunctuation=T,
+  stripWhitespace=T
+  
+))
+```
+
+```{r}
+?tm_map
+```
+
+
+
+
